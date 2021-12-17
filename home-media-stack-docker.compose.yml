@@ -1,0 +1,255 @@
+version: "3"
+networks:
+  media-network:
+    external: true # TODO: Should flip to not external
+volumes:
+  prometheus_data:
+    external: true # TODO: Should flip to not external
+services:
+  flood:
+    hostname: flood
+    container_name: flood1
+    user: 1000:1001
+    environment:
+      - HOME=/config
+    command: --port 3001 --allowedpath /data
+    image: jesec/flood:latest
+    networks:
+      - media-network
+    ports:
+      - 0.0.0.0:3001:3001/tcp
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/flood/config:/config
+      - ${GLOBAL_CONFIG_ROOT}/flood/data:/data
+  grafana:
+    container_name: grafana1
+    image: grafana/grafana-oss:latest
+    user: "1000"
+    logging:
+      driver: json-file
+      options: {}
+    networks:
+      - media-network
+    ports:
+      - 3000:3000/tcp
+    restart: unless-stopped
+    working_dir: /usr/share/grafana
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/grafana/data:/var/lib/grafana
+  heimdall:
+    container_name: heimdall1
+    entrypoint:
+      - /init
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Toronto
+    image: lscr.io/linuxserver/heimdall:latest
+    networks:
+      - media-network
+    ports:
+      - 8443:443/tcp
+      - 8080:80/tcp
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/heimdall/config:/config
+  jackett:
+    container_name: jackett1
+    entrypoint:
+      - /init
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Toronto
+      - AUTO_UPDATE=true
+    image: lscr.io/linuxserver/jackett:latest
+    networks:
+      - media-network
+    ports:
+      - 9117:9117/tcp
+    restart: unless-stopped
+    volumes:
+      - ${TORRENTS_DIR}:/downloads
+      - ${GLOBAL_CONFIG_ROOT}/jackett/config:/config
+  jellyfin:
+    container_name: jellyfin1
+    entrypoint:
+      - /jellyfin/jellyfin
+    environment:
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+      - JELLYFIN_MEDIA_DIR=/media
+      - JELLYFIN_DATA_DIR=/config
+      - JELLYFIN_CACHE_DIR=/cache
+      - JELLYFIN_CONFIG_DIR=/config/config
+      - JELLYFIN_LOG_DIR=/config/log
+      - JELLYFIN_WEB_DIR=/jellyfin/jellyfin-web
+      - JELLYFIN_FFMPEG=/usr/lib/jellyfin-ffmpeg/ffmpeg
+    expose:
+      - 8096/tcp
+    hostname: anirudh-media-rig
+    image: jellyfin/jellyfin:latest
+    privileged: true # Needed to access nvidia hardware, should make this more secure
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/jellyfin/config:/config
+      - ${GLOBAL_CONFIG_ROOT}/jellyfin/cache:/cache
+      - ${RAID_ARRAY_ROOT}/media:/media
+    network_mode: host
+  ombi:
+    container_name: ombi1
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Toronto
+      - HOME=/config
+    # image: lscr.io/linuxserver/ombi:4.7.4
+    image: lscr.io/linuxserver/ombi:latest
+    networks:
+      - media-network
+    ports:
+      - 3579:3579/tcp
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/ombi/config:/config
+  # portainer:
+  #   container_name: portainer1
+  #   entrypoint:
+  #     - /portainer
+  #   environment:
+  #     - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  #   hostname: 5d211ff2abe9
+  #   image: portainer/portainer-ce:latest
+  #   ipc: private
+  #   logging:
+  #     driver: json-file
+  #     options: {}
+  #   ports:
+  #     - 9000:9000/tcp
+  #     - 9443:9443/tcp
+  #   restart: always
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ${GLOBAL_CONFIG_ROOT}/portainer/data:/data
+  #   working_dir: /
+  prometheus:
+    command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
+    container_name: prometheus1
+    environment:
+      - PUID=1000
+      - PGID=1000
+    image: prom/prometheus:latest
+    networks:
+      - media-network
+    ports:
+      - 9090:9090/tcp
+    restart: unless-stopped
+    user: nobody
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/prometheus/config:/etc/prometheus
+      - prometheus_data:/prometheus
+  prometheus-node-exporter:
+    command:
+      - --path.rootfs=/host
+    container_name: prometheus-node-exporter1
+    image: quay.io/prometheus/node-exporter:latest
+    ipc: private
+    logging:
+      driver: json-file
+      options: {}
+    networks:
+      - media-network
+    ports:
+      - 9100:9100/tcp
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    user: nobody
+    volumes:
+      - /:/host:ro,rslave
+  radarr:
+    container_name: radarr1
+    entrypoint:
+      - /init
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Toronto
+    image: lscr.io/linuxserver/radarr:latest
+    networks:
+      - media-network
+    ports:
+      - 7878:7878/tcp
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/radarr/config:/config
+      - ${RAID_ARRAY_ROOT}:/data
+  sonarr:
+    container_name: sonarr1
+    entrypoint:
+      - /init
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Toronto
+    image: lscr.io/linuxserver/sonarr:latest
+    networks:
+      - media-network
+    ports:
+      - 8989:8989/tcp
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/sonarr/config:/config
+      - ${RAID_ARRAY_ROOT}:/data
+  transmission:
+    container_name: transmission1
+    environment:
+      - OPENVPN_PROVIDER=SURFSHARK
+      - OPENVPN_CONFIG=ca-tor_udp
+      - OPENVPN_USERNAME=${OPENVPN_USERNAME}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - LOCAL_NETWORK=192.168.0.0/16
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - GLOBAL_APPLY_PERMISSIONS=true
+      - TRANSMISSION_HOME=/data/torrents/transmission-home
+      - TRANSMISSION_RPC_PORT=9091
+      - TRANSMISSION_DOWNLOAD_DIR=/data/torrents/completed
+      - TRANSMISSION_INCOMPLETE_DIR=/data/torrents/incomplete
+      - TRANSMISSION_WATCH_DIR=/data/torrents/watch
+      - CREATE_TUN_DEVICE=true
+      - ENABLE_UFW=false
+      - UFW_ALLOW_GW_NET=false
+      - UFW_EXTRA_PORTS=
+      - UFW_DISABLE_IPTABLES_REJECT=false
+      - PUID=
+      - PGID=
+      - PEER_DNS=true
+      - PEER_DNS_PIN_ROUTES=true
+      - DROP_DEFAULT_ROUTE=
+      - WEBPROXY_ENABLED=false
+      - WEBPROXY_PORT=8118
+      - WEBPROXY_USERNAME=
+      - WEBPROXY_PASSWORD=
+      - LOG_TO_STDOUT=false
+      - HEALTH_CHECK_HOST=google.com
+      - SELFHEAL=false
+      - REVISION=25b9724178f48227084f5a462b82b1fbc087498d
+    hostname: transmission
+    image: haugene/transmission-openvpn:latest
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    networks:
+      - media-network
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 9091:9091/tcp
+    restart: unless-stopped
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/transmission/config:/config
+      - ${RAID_ARRAY_ROOT}:/data
