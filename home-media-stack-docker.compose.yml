@@ -8,7 +8,7 @@ volumes:
 services:
   flood:
     hostname: flood
-    container_name: flood1
+    container_name: flood
     user: 1000:1001
     environment:
       - HOME=/config
@@ -23,7 +23,7 @@ services:
       - ${GLOBAL_CONFIG_ROOT}/flood/config:/config
       - ${GLOBAL_CONFIG_ROOT}/flood/data:/data
   grafana:
-    container_name: grafana1
+    container_name: grafana
     image: grafana/grafana-oss:latest
     user: "1000"
     logging:
@@ -38,7 +38,7 @@ services:
     volumes:
       - ${GLOBAL_CONFIG_ROOT}/grafana/data:/var/lib/grafana
   heimdall:
-    container_name: heimdall1
+    container_name: heimdall
     entrypoint:
       - /init
     environment:
@@ -55,7 +55,7 @@ services:
     volumes:
       - ${GLOBAL_CONFIG_ROOT}/heimdall/config:/config
   jackett:
-    container_name: jackett1
+    container_name: jackett
     entrypoint:
       - /init
     environment:
@@ -73,7 +73,7 @@ services:
       - ${TORRENTS_DIR}:/downloads
       - ${GLOBAL_CONFIG_ROOT}/jackett/config:/config
   jellyfin:
-    container_name: jellyfin1
+    container_name: jellyfin
     entrypoint:
       - /jellyfin/jellyfin
     environment:
@@ -100,7 +100,7 @@ services:
       - ${RAID_ARRAY_ROOT}/media:/media
     network_mode: host
   ombi:
-    container_name: ombi1
+    container_name: ombi
     environment:
       - PUID=1000
       - PGID=1000
@@ -137,7 +137,7 @@ services:
   #   working_dir: /
   prometheus:
     command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
-    container_name: prometheus1
+    container_name: prometheus
     environment:
       - PUID=1000
       - PGID=1000
@@ -154,7 +154,7 @@ services:
   prometheus-node-exporter:
     command:
       - --path.rootfs=/host
-    container_name: prometheus-node-exporter1
+    container_name: prometheus-node-exporter
     image: quay.io/prometheus/node-exporter:latest
     ipc: private
     logging:
@@ -171,7 +171,7 @@ services:
     volumes:
       - /:/host:ro,rslave
   radarr:
-    container_name: radarr1
+    container_name: radarr
     entrypoint:
       - /init
     environment:
@@ -188,7 +188,7 @@ services:
       - ${GLOBAL_CONFIG_ROOT}/radarr/config:/config
       - ${RAID_ARRAY_ROOT}:/data
   sonarr:
-    container_name: sonarr1
+    container_name: sonarr
     entrypoint:
       - /init
     environment:
@@ -205,7 +205,7 @@ services:
       - ${GLOBAL_CONFIG_ROOT}/sonarr/config:/config
       - ${RAID_ARRAY_ROOT}:/data
   transmission:
-    container_name: transmission1
+    container_name: transmission
     environment:
       - OPENVPN_PROVIDER=SURFSHARK
       - OPENVPN_CONFIG=ca-tor_udp
@@ -253,3 +253,23 @@ services:
     volumes:
       - ${GLOBAL_CONFIG_ROOT}/transmission/config:/config
       - ${RAID_ARRAY_ROOT}:/data
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+    environment:
+      TZ: 'America/Toronto'
+      WEBPASSWORD: ${PIHOLE_PASSWORD}
+    # Volumes store your data between container upgrades
+    volumes:
+      - ${GLOBAL_CONFIG_ROOT}/pihole/etc/pihole:/etc/pihole
+      - ${GLOBAL_CONFIG_ROOT}/pihole/etc/dnsmasq.d:/etc/dnsmasq.d
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
