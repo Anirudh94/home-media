@@ -116,7 +116,7 @@ services:
     volumes:
       - ${GLOBAL_CONFIG_ROOT}/ombi/config:/config
   # portainer:
-  #   container_name: portainer1
+  #   container_name: portainer
   #   entrypoint:
   #     - /portainer
   #   environment:
@@ -257,10 +257,10 @@ services:
     container_name: pihole
     image: pihole/pihole:latest
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp"
-      - "80:80/tcp"
+      - 53:53/tcp
+      - 53:53/udp
+      - 67:67/udp
+      - 80:80/tcp
     environment:
       TZ: 'America/Toronto'
       WEBPASSWORD: ${PIHOLE_PASSWORD}
