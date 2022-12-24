@@ -273,3 +273,26 @@ services:
     cap_add:
       - NET_ADMIN
     restart: unless-stopped
+  # Reverse proxy entry point into the server using nginx
+  # nginx:
+  #   container_name: nginx
+  #   hostname: nginx
+  #   image: nginx
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   volumes:
+  #     - ${GLOBAL_CONFIG_ROOT}/nginx/etc/nginx:/etc/nginx
+  #     - ${GLOBAL_CONFIG_ROOT}/nginx/etc/ssl/private:/etc/ssl/private
+  # Reverse proxy entry point into the server using caddy
+  # caddy:
+  #   container_name: caddy
+  #   image: caddy:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   volumes:
+  #     - ${GLOBAL_CONFIG_ROOT}/caddy/data:/data
+  #     - ${GLOBAL_CONFIG_ROOT}/caddy/config:/caddy/config
+  #     - ${GLOBAL_CONFIG_ROOT}/caddy/Caddyfile:/etc/caddy/Caddyfile
