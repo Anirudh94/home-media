@@ -208,7 +208,7 @@ services:
     container_name: transmission
     environment:
       - OPENVPN_PROVIDER=SURFSHARK
-      - OPENVPN_CONFIG=ca-tor_udp
+      - OPENVPN_CONFIG=ca-tor.prod.surfshark.com_udp
       - OPENVPN_USERNAME=${OPENVPN_USERNAME}
       - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
       - LOCAL_NETWORK=192.168.0.0/16
