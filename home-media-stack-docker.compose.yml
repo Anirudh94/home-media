@@ -88,8 +88,6 @@ services:
       - JELLYFIN_LOG_DIR=/config/log
       - JELLYFIN_WEB_DIR=/jellyfin/jellyfin-web
       - JELLYFIN_FFMPEG=/usr/lib/jellyfin-ffmpeg/ffmpeg
-    expose:
-      - 8096/tcp
     hostname: anirudh-media-rig
     image: jellyfin/jellyfin:latest
     privileged: true # Needed to access nvidia hardware, should make this more secure
@@ -98,7 +96,10 @@ services:
       - ${GLOBAL_CONFIG_ROOT}/jellyfin/config:/config
       - ${GLOBAL_CONFIG_ROOT}/jellyfin/cache:/cache
       - ${RAID_ARRAY_ROOT}/media:/media
-    network_mode: host
+    networks:
+      - media-network
+    ports:
+      - 0.0.0.0:8096:8096/tcp
   ombi:
     container_name: ombi
     environment:
